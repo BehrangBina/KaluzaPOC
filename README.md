@@ -29,3 +29,35 @@ tests/
 
 This structure ensures your test automation codebase remains organized, robust, and easy to work with as it evolves.
 
+---
+
+## 2. Apply SOLID Principles + Design Patterns
+
+### SOLID in TypeScript Automation Context
+
+- **S (Single Responsibility):**  
+  Each module (e.g., API client) does one thing.
+
+- **O (Open/Closed):**  
+  Use interfaces to support swappable HTTP libraries (e.g., axios, fetch).
+
+- **L (Liskov Substitution):**  
+  Design step definitions that can accept extended test data (e.g., via tables).
+
+- **I (Interface Segregation):**  
+  Clients and services expose minimal interfaces.
+
+- **D (Dependency Inversion):**  
+  Inject config/headers rather than hardcoding.
+
+### Design Patterns
+
+- **Factory:**  
+  Create API clients with injected base URLs.
+
+- **Builder:**  
+  For request payloads if they become complex.
+
+- **Strategy:**  
+  For mocking behavior or switching environments.
+
