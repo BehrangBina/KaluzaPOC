@@ -1,29 +1,39 @@
-import { Given, When, Then, DataTable } from '@badeball/cypress-cucumber-preprocessor';
+import { Given, When, Then } from '@cucumber/cucumber';
+import { expect } from 'chai';
+import { getEstimatedAge } from '../support/api/agify';
 
-Given(`I have the name {string}`, (arg0: string) => {
-    // [Given] Sets up the initial state of the system.
+let response: any;
+
+Given('I have the name {string}', function (inputName: string) {
+    this.name = inputName;
 });
 
-When(`I send a GET request to the Agify API`, () => {
-    // [When] Describes the action or event that triggers the scenario.
+Given('I have no name', function () {
+    this.name = '';
 });
 
-Then(`the response status should be {int}`, (arg0: number) => {
-    // [Then] Describes the expected outcome or result of the scenario.
+When('I send a GET request to the Agify API', async function () {
+    response = await getEstimatedAge(this.name);
 });
 
-Then(`the response should contain a name`, () => {
-    // [Then] Describes the expected outcome or result of the scenario.
+Then('the response status should be {int}', function (expectedStatus: number) {
+    expect(response.status).to.equal(expectedStatus);
 });
 
-Then(`the response should contain an age`, () => {
-    // [Then] Describes the expected outcome or result of the scenario.
+Then('the response should contain a name', function () {
+    expect(response.data).to.have.property('name');
+    expect(response.data.name).to.be.a('string');
 });
 
-Then(`the age should be null or a number`, () => {
-    // [Then] Describes the expected outcome or result of the scenario.
+Then('the response should contain an age', function () {
+    expect(response.data).to.have.property('age');
+    expect(response.data.age).to.satisfy((age: any) => 
+        age === null || typeof age === 'number'
+    );
 });
 
-Given(`I have no name`, () => {
-    // [Given] Sets up the initial state of the system.
+Then('the age should be null or a number', function () {
+    expect(response.data.age).to.satisfy((age: any) => 
+        age === null || typeof age === 'number'
+    );
 });

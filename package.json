@@ -4,13 +4,20 @@
   "description": "Create BDD scenarios and step definitions to test agify.io",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "cucumber-js",
+    "test:report": "cucumber-js --format html:reports/cucumber-report.html"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/BehrangBina/KaluzaPOC.git"
   },
-  "keywords": [],
+  "keywords": [
+    "bdd",
+    "cucumber",
+    "api-testing",
+    "typescript",
+    "automation"
+  ],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
@@ -20,11 +27,13 @@
   "homepage": "https://github.com/BehrangBina/KaluzaPOC#readme",
   "devDependencies": {
     "@cucumber/cucumber": "^11.3.0",
+    "@types/chai": "^4.3.20",
     "@types/node": "^24.0.10",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3"
   },
   "dependencies": {
-    "axios": "^1.10.0"
+    "axios": "^1.10.0",
+    "chai": "^4.5.0"
   }
 }
