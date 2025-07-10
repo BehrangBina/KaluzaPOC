@@ -21,7 +21,8 @@ const BASE_URL = 'https://api.agify.io';
 
 export async function getEstimatedAge(
   name: string, 
-  country?: string
+  country?: string,
+  apiKey?: string
 ): Promise<ApiResponse> {
   try {
     const params = new URLSearchParams();
@@ -33,6 +34,10 @@ export async function getEstimatedAge(
     
     if (country) {
       params.append('country_id', country);
+    }
+
+    if (apiKey) {
+      params.append('apikey', apiKey);
     }
     
     const url = `${BASE_URL}?${params.toString()}`;
@@ -63,11 +68,15 @@ export async function getEstimatedAge(
 }
 
 export async function getEstimatedAgeForMultipleNames(
-  names: string[]
+  names: string[],
+  countryId?: string
 ): Promise<ApiResponse> {
   try {
-    const params = names.map(name => `name[]=${encodeURIComponent(name)}`).join('&');
-    const url = `${BASE_URL}?${params}`;
+    let params = names.map(name => `name[]=${encodeURIComponent(name)}`).join('&');
+    if (countryId) {
+      params += `&country_id=${countryId}`;
+    }
+    const url = params ? `${BASE_URL}?${params}` : BASE_URL;
     const response = await axios.get(url);
     
     return {
