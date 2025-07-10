@@ -8,7 +8,21 @@ import {
   AgifyResponse,
   AgifyErrorResponse
 } from '../support/api/agify';
-
+import { 
+  mockValidName,
+  mockNameWithNumbers,
+  mockMissingName,
+  mockEmptyName,
+  mockNameWithCountry,
+  mockBatchRequest,
+  mockRateLimitHeaders,
+  mockInvalidApiKey,
+  mockBatchTooLarge,
+  mockEmptyBatchRequest,
+  mockNameWithDiacritics,
+  mockRateLimitExceeded,
+  mockBatchWithCountry
+} from '../support/mocks/agifyApi.mock';
 let response: ApiResponse;
 
 // Given steps
@@ -139,3 +153,12 @@ Then('the response should include rate limit headers', function () {
     
     expect(hasRateLimitHeaders).to.be.true;
 });
+ 
+ Given('I use an invalid API key {string}', function (apiKey: string) {
+  this.apiKey = apiKey;
+  if (process.env.USE_MOCK === 'true') {
+    mockInvalidApiKey();
+  }
+});
+
+ 
