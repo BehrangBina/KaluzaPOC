@@ -8,8 +8,9 @@
     "test:mock": "cross-env USE_MOCK=true cucumber-js",
     "test:allure": "cross-env USE_MOCK=true cucumber-js",
     "report:allure": "allure generate allure-results --clean -o allure-report",
-    "prepublishOnly": "npm run build",
-    "build": "tsc"
+    "prepublishOnly": "npm run build",    
+    "build": "tsc",
+    "test:report": "cross-env USE_MOCK=true cucumber-js && npm run report:allure"
   },
   "repository": {
     "type": "git",
