@@ -17,4 +17,6 @@ logs/
 # Environment variables
 .env
 .env.local
- 
+
+# ignore allure results 
+allure-report/*
