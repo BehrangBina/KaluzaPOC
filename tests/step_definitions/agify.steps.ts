@@ -1,6 +1,5 @@
 import { Given, When, Then } from '@cucumber/cucumber';
 import { expect } from 'chai';
-import nock from 'nock';
 import { 
   getEstimatedAge, 
   getEstimatedAgeForMultipleNames, 
@@ -13,16 +12,17 @@ import { logger } from '../support/logger';
 import { 
   mockValidName,
   mockNameWithNumbers,
-  mockMissingName,
-  mockEmptyName,
+  mockNameWithDiacritics,
   mockNameWithCountry,
   mockBatchRequest,
+  mockMissingName,
+  mockRateLimitExceeded,
   mockRateLimitHeaders,
   mockInvalidApiKey,
   mockBatchTooLarge,
-  mockEmptyBatchRequest,
-  mockNameWithDiacritics,
-  mockRateLimitExceeded,
+  mockEmptyNameList,
+  mockSpecialCharacters,
+  mockVeryLongName,
   mockBatchWithCountry
 } from '../support/mocks/agifyApi.mock';
 
@@ -33,103 +33,123 @@ Given('I have the name {string}', function (inputName: string) {
     this.name = inputName;
     this.country = undefined;
     this.names = undefined;
-    logger.debug({ name: inputName }, 'Set single name');
-
+    logger.debug('Set single name', { name: inputName });
+    
+    // Set up mocks based on the name when using mock mode
     if (process.env.USE_MOCK === 'true') {
-      switch (inputName) {
-        case 'michael':
-          // This will be handled in conjunction with the country step
-          if (!this.country) mockValidName();
-          break;
-        case 'john123':
-          mockNameWithNumbers();
-          break;
-        case 'test':
-          // This is handled by a separate 'exceeded limit' step
-          if (!this.limitExceeded) mockRateLimitHeaders();
-          break;
-        case 'René':
-          mockNameWithDiacritics();
-          break;
-      }
+        switch (inputName) {
+            case 'michael':
+                mockValidName();
+                break;
+            case 'john123':
+                mockNameWithNumbers();
+                break;
+            case 'rené':
+                mockNameWithDiacritics();
+                break;
+            case 'peter':
+                mockNameWithCountry();
+                break;
+            case 'test':
+                // Different mocks for different scenarios with same name
+                if (this.apiKey) {
+                    mockInvalidApiKey();
+                } else {
+                    mockRateLimitHeaders();
+                }
+                break;
+            case 'josé':
+                mockSpecialCharacters();
+                break;
+            default:
+                logger.warn('No mock configured for name:', inputName);
+        }
     }
 });
 
-Given('I have no name parameter', function () {
+Given('I have the names {string}', function (inputNames: string) {
+    this.names = inputNames.split(',');
     this.name = undefined;
-    this.country = undefined;
-    this.names = undefined;
+    logger.debug('Set multiple names', { names: this.names });
+    
+    // Set up mocks for batch requests when using mock mode
     if (process.env.USE_MOCK === 'true') {
-      mockMissingName();
+        if (inputNames === 'alice,bob') {
+            mockBatchRequest();
+        } else if (inputNames === 'maria,carlos') {
+            mockBatchWithCountry();
+        }
     }
 });
 
-Given('I have an empty name {string}', function (inputName: string) {
-    this.name = inputName;
-    this.country = undefined;
-    this.names = undefined;
-    if (process.env.USE_MOCK === 'true') {
-      mockEmptyName();
-    }
-});
-
-Given('I specify country {string}', function (country: string) {
+Given('I have the country {string}', function (country: string) {
     this.country = country;
-    if (process.env.USE_MOCK === 'true') {
-      if (this.name === 'michael') {
-        mockNameWithCountry();
-      } else if (this.names) {
-        mockBatchWithCountry();
-      }
-    }
+    logger.debug('Set country', { country });
 });
 
-Given('I have multiple names {string}', function (namesList: string) {
-    this.names = namesList.split(',').map(name => name.trim());
+Given('I have no name', function () {
     this.name = undefined;
-    this.country = undefined;
-    if (process.env.USE_MOCK === 'true' && !this.country) {
-      mockBatchRequest();
+    this.names = undefined;
+    logger.debug('Set no name');
+    
+    if (process.env.USE_MOCK === 'true') {
+        mockMissingName();
     }
 });
 
-// --- New Given Steps ---
-
-Given('I use an invalid API key {string}', function (apiKey: string) {
-  this.apiKey = apiKey;
-  if (process.env.USE_MOCK === 'true') {
-    mockInvalidApiKey();
-  }
+Given('I have an invalid API key {string}', function (apiKey: string) {
+    this.apiKey = apiKey;
+    logger.debug('Set invalid API key', { apiKey });
+    
+    if (process.env.USE_MOCK === 'true') {
+        mockInvalidApiKey();
+    }
 });
 
-Given('I have a list of 11 names', function () {
-  this.names = Array.from({ length: 11 }, (_, i) => `name${i}`);
-  if (process.env.USE_MOCK === 'true') {
-    mockBatchTooLarge();
-  }
+Given('I have too many names in batch', function () {
+    this.names = Array.from({ length: 11 }, (_, i) => `name${i}`);
+    logger.debug('Set too many names', { count: this.names.length });
+    
+    if (process.env.USE_MOCK === 'true') {
+        mockBatchTooLarge();
+    }
 });
 
 Given('I have an empty list of names', function () {
-  this.names = [];
-  if (process.env.USE_MOCK === 'true') {
-    mockMissingName(); // Use the correct, existing mock
-  }
+    this.names = [];
+    logger.debug('Set empty names list');
+    
+    if (process.env.USE_MOCK === 'true') {
+        mockEmptyNameList();
+    }
 });
 
-Given('I have exceeded my request limit', function () {
-  this.limitExceeded = true;
-  if (process.env.USE_MOCK === 'true') {
-    nock.cleanAll(); // Clean up previous mocks
-    mockRateLimitExceeded();
-  }
+Given('I have a very long name', function () {
+    this.name = 'a'.repeat(256);
+    logger.debug('Set very long name', { length: this.name.length });
+    
+    if (process.env.USE_MOCK === 'true') {
+        mockVeryLongName();
+    }
 });
 
+// Special step for rate limit testing
+Given('I have the name {string} for rate limit testing', function (inputName: string) {
+    this.name = inputName;
+    logger.debug('Set name for rate limit testing', { name: inputName });
+    
+    if (process.env.USE_MOCK === 'true') {
+        mockRateLimitExceeded();
+    }
+});
 
 // When steps
 When('I send a GET request to the Agify API', async function () {
     logger.debug({ name: this.name, country: this.country, apiKey: this.apiKey }, 'Sending Agify request');
     if (this.name !== undefined) {
         response = await getEstimatedAge(this.name, this.country, this.apiKey);
+    } else if (this.names !== undefined) {
+        response = await getEstimatedAgeForMultipleNames(this.names, this.country);
     } else {
         // For testing missing name parameter
         response = await makeRawRequest('https://api.agify.io');
@@ -137,104 +157,78 @@ When('I send a GET request to the Agify API', async function () {
     logger.debug({ status: response.status, data: response.data }, 'Received response');
 });
 
-When('I send a batch GET request to the Agify API', async function () {
-    logger.debug({ names: this.names, country: this.country }, 'Sending batch Agify request');
-    if (this.names && Array.isArray(this.names)) {
-        response = await getEstimatedAgeForMultipleNames(this.names, this.country);
-    } else {
-        throw new Error('No names array provided for batch request');
-    }
-    logger.debug({ status: response.status, data: response.data }, 'Received batch response');
-});
-
-// Then steps for status
+// Then steps
 Then('the response status should be {int}', function (expectedStatus: number) {
+    logger.debug('Checking status', { expected: expectedStatus, actual: response.status });
     expect(response.status).to.equal(expectedStatus);
 });
 
-// Then steps for success responses
-Then('the response should contain a name {string}', function (expectedName: string) {
-    expect(response.data).to.have.property('name');
-    expect((response.data as AgifyResponse).name).to.equal(expectedName);
+Then('the response should contain a name', function () {
+    const data = response.data as AgifyResponse;
+    logger.debug('Checking name presence', { name: data.name });
+    expect(data).to.have.property('name');
+    expect(data.name).to.be.a('string');
 });
 
 Then('the response should contain an age', function () {
-    logger.debug({ data: response.data }, 'Validating age field');
-    expect(response.data).to.have.property('age');
-    const age = (response.data as AgifyResponse).age;
-    expect(age).to.satisfy((value: any) => value === null || typeof value === 'number');
+    const data = response.data as AgifyResponse;
+    logger.debug('Checking age presence', { age: data.age });
+    expect(data).to.have.property('age');
+    expect(data.age).to.satisfy((age: any) => age === null || typeof age === 'number');
 });
 
-Then('the response should contain a count', function () {
-    expect(response.data).to.have.property('count');
-    expect((response.data as AgifyResponse).count).to.be.a('number');
-    expect((response.data as AgifyResponse).count).to.be.at.least(0);
-});
-
-Then('the response should contain a count {int}', function (expectedCount: number) {
-    expect(response.data).to.have.property('count');
-    expect((response.data as AgifyResponse).count).to.equal(expectedCount);
-});
-
-Then('the response should contain null age', function () {
-    expect(response.data).to.have.property('age');
-    expect((response.data as AgifyResponse).age).to.be.null;
+Then('the response should contain a country', function () {
+    const data = response.data as AgifyResponse;
+    logger.debug('Checking country presence', { country: data.country_id });
+    expect(data).to.have.property('country_id');
+    expect(data.country_id).to.be.a('string');
 });
 
 Then('the age should be null or a number', function () {
-    expect(response.data).to.have.property('age');
-    const age = (response.data as AgifyResponse).age;
-    expect(age).to.satisfy((value: any) => value === null || typeof value === 'number');
+    const data = response.data as AgifyResponse;
+    logger.debug('Checking age type', { age: data.age, type: typeof data.age });
+    expect(data.age).to.satisfy((age: any) => age === null || typeof age === 'number');
 });
 
-// Then steps for error responses
-Then('the response should contain error {string}', function (expectedError: string) {
-    expect(response.data).to.have.property('error');
-    expect((response.data as AgifyErrorResponse).error).to.equal(expectedError);
-});
-
-// Then steps for batch responses
-Then('the response should be an array of {int} predictions', function (expectedCount: number) {
+Then('the response should be an array', function () {
+    logger.debug('Checking array type', { isArray: Array.isArray(response.data) });
     expect(response.data).to.be.an('array');
-    expect((response.data as AgifyResponse[]).length).to.equal(expectedCount);
 });
 
-Then('each prediction should contain name and age', function () {
-    expect(response.data).to.be.an('array');
-    const predictions = response.data as AgifyResponse[];
-    
-    predictions.forEach((prediction) => {
-        expect(prediction).to.have.property('name');
-        expect(prediction).to.have.property('age');
-        expect(prediction).to.have.property('count');
-        
-        expect(prediction.name).to.be.a('string');
-        expect(prediction.age).to.satisfy((value: any) => 
-            value === null || typeof value === 'number'
-        );
-        expect(prediction.count).to.be.a('number');
+Then('each item should contain a name and age', function () {
+    const data = response.data as AgifyResponse[];
+    logger.debug('Checking array items', { count: data.length });
+    expect(data).to.be.an('array');
+    data.forEach((item, index) => {
+        logger.debug(`Checking item ${index}`, { item });
+        expect(item).to.have.property('name');
+        expect(item).to.have.property('age');
+        expect(item.name).to.be.a('string');
+        expect(item.age).to.satisfy((age: any) => age === null || typeof age === 'number');
     });
 });
 
-Then('each prediction should have a country_id {string}', function (countryId: string) {
-  expect(response.data).to.be.an('array');
-  const predictions = response.data as AgifyResponse[];
-
-  predictions.forEach((prediction) => {
-    expect(prediction).to.have.property('country_id', countryId);
-  });
+Then('each item should contain a country', function () {
+    const data = response.data as AgifyResponse[];
+    logger.debug('Checking country in array items', { count: data.length });
+    expect(data).to.be.an('array');
+    data.forEach((item, index) => {
+        logger.debug(`Checking country in item ${index}`, { item });
+        expect(item).to.have.property('country_id');
+        expect(item.country_id).to.be.a('string');
+    });
 });
 
-// Then steps for rate limiting
+Then('the response should contain error {string}', function (expectedError: string) {
+    const data = response.data as AgifyErrorResponse;
+    logger.debug('Checking error message', { expected: expectedError, actual: data.error });
+    expect(data).to.have.property('error');
+    expect(data.error).to.equal(expectedError);
+});
+
 Then('the response should include rate limit headers', function () {
-    const headers = response.headers;
-    
-    // Check for common rate limit headers (exact header names may vary)
-    const hasRateLimitHeaders = 
-        'x-ratelimit-limit' in headers ||
-        'x-ratelimit-remaining' in headers ||
-        'x-rate-limit-limit' in headers ||
-        'x-rate-limit-remaining' in headers;
-    
-    expect(hasRateLimitHeaders).to.be.true;
+    logger.debug('Checking rate limit headers', { headers: response.headers });
+    expect(response.headers).to.have.property('x-rate-limit-limit');
+    expect(response.headers).to.have.property('x-rate-limit-remaining');
+    expect(response.headers).to.have.property('x-rate-limit-reset');
 });

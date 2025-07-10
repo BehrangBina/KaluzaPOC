@@ -1,9 +1,12 @@
 import axios from 'axios';
 
+const BASE_URL = 'https://api.agify.io';
+
 export interface AgifyResponse {
   name: string;
   age: number | null;
   count: number;
+  country_id?: string;
 }
 
 export interface AgifyErrorResponse {
@@ -13,11 +16,8 @@ export interface AgifyErrorResponse {
 export interface ApiResponse {
   data: AgifyResponse | AgifyResponse[] | AgifyErrorResponse;
   status: number;
-  statusText: string;
-  headers: Record<string, string>;
+  headers: any;
 }
-
-const BASE_URL = 'https://api.agify.io';
 
 export async function getEstimatedAge(
   name: string, 
@@ -26,11 +26,7 @@ export async function getEstimatedAge(
 ): Promise<ApiResponse> {
   try {
     const params = new URLSearchParams();
-    
-    // Always append name parameter if it's defined (even if empty string)
-    if (name !== undefined) {
-      params.append('name', name);
-    }
+    params.append('name', name);
     
     if (country) {
       params.append('country_id', country);
@@ -46,23 +42,13 @@ export async function getEstimatedAge(
     return {
       data: response.data,
       status: response.status,
-      statusText: response.statusText,
-      headers: response.headers as Record<string, string>
+      headers: response.headers
     };
   } catch (error: any) {
-    if (error.response) {
-      return {
-        data: error.response.data,
-        status: error.response.status,
-        statusText: error.response.statusText,
-        headers: error.response.headers as Record<string, string>
-      };
-    }
     return {
-      data: { error: error.message },
-      status: 500,
-      statusText: 'Internal Server Error',
-      headers: {}
+      data: error.response?.data || { error: 'Network error' },
+      status: error.response?.status || 500,
+      headers: error.response?.headers || {}
     };
   }
 }
@@ -82,23 +68,13 @@ export async function getEstimatedAgeForMultipleNames(
     return {
       data: response.data,
       status: response.status,
-      statusText: response.statusText,
-      headers: response.headers as Record<string, string>
+      headers: response.headers
     };
   } catch (error: any) {
-    if (error.response) {
-      return {
-        data: error.response.data,
-        status: error.response.status,
-        statusText: error.response.statusText,
-        headers: error.response.headers as Record<string, string>
-      };
-    }
     return {
-      data: { error: error.message },
-      status: 500,
-      statusText: 'Internal Server Error',
-      headers: {}
+      data: error.response?.data || { error: 'Network error' },
+      status: error.response?.status || 500,
+      headers: error.response?.headers || {}
     };
   }
 }
@@ -109,23 +85,13 @@ export async function makeRawRequest(url: string): Promise<ApiResponse> {
     return {
       data: response.data,
       status: response.status,
-      statusText: response.statusText,
-      headers: response.headers as Record<string, string>
+      headers: response.headers
     };
   } catch (error: any) {
-    if (error.response) {
-      return {
-        data: error.response.data,
-        status: error.response.status,
-        statusText: error.response.statusText,
-        headers: error.response.headers as Record<string, string>
-      };
-    }
     return {
-      data: { error: error.message },
-      status: 500,
-      statusText: 'Internal Server Error',
-      headers: {}
+      data: error.response?.data || { error: 'Network error' },
+      status: error.response?.status || 500,
+      headers: error.response?.headers || {}
     };
   }
 } 

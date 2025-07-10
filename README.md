@@ -1,248 +1,188 @@
 # Agify API Test Automation Framework
 
-This project demonstrates a comprehensive API testing approach using Behavior-Driven Development (BDD) with TypeScript and Cucumber. 
+Hey there! Welcome to our project. We've built a simple but powerful tool to automatically test a fun public API called [Agify.io](https://agify.io/documentation).
 
-We're testing the [Agify.io API](https://agify.io/documentation), which predicts someone's age based on their first name. Think of it as a fun way to showcase serious testing skills.
+## So, what's an API?
 
-## What This Project Does
+Imagine you're at a restaurant. You don't go into the kitchen to cook your food, right? You give your order to a waiter (the API), who takes it to the kitchen, and then brings the food back to you.
 
-This framework tests the Agify API thoroughly. We cover the happy paths, edge cases, error scenarios, and advanced features like batch processing and localization. Every test runs against the real API, so you see authentic behavior.
+An API (Application Programming Interface) is just like that waiter. It's a way for different software programs to talk to each other. In our case, our testing program sends a name to the Agify API, and it sends back a guess about how old someone with that name might be.
 
-The tests are written in plain English using Gherkin syntax, making them readable for anyone on your team - technical or not.
+### What does this project do?
 
-## Quick Start
+This project automatically tests the Agify API to make sure it's working correctly. Think of it like having a robot that goes to the restaurant every day and orders the same meals to make sure the kitchen is still working properly.
 
-Get up and running in under 2 minutes:
+**What you'll need:**
 
-### Prerequisites
+* A little program called Node.js. If you don't have it, you can [download it from the official website](https://nodejs.org/).
 
-You'll need Node.js installed on your machine. We've tested this with Node.js 16+ and npm 7+.
+**Installation Steps:**
 
-### Installation
+1. First, download all the project files to your computer (this is called "cloning").
+2. Open your terminal or command prompt.
+3. Navigate to the project folder.
+4. Type `npm install` and press Enter. This downloads all the helper tools we need.
+
+## Running the Tests
+
+We've set up three different ways to run our tests:
+
+### Option 1: Testing with a Mock Server (Recommended for Development)
+
+This is like having a pretend restaurant that always gives you the same food, no matter what you order. It's great for testing because:
+
+* It's super fast
+* It doesn't use up your daily API requests
+* It works even when you don't have internet
+
+To run the tests against the mock server:
 
 ```bash
-# Clone the repository
-git clone https://github.com/BehrangBina/KaluzaPOC.git
-cd KaluzaPOC
+npm run test:mock
+```
 
-# Install dependencies
-npm install
+### Option 2: Testing the Real API
 
-# Run the tests
+This actually talks to the real Agify website. It's slower and uses up your daily free requests, but it tests the real thing.
+
+To run the tests against the live API:
+
+```bash
 npm run test
 ```
 
-That's it! You should see all 7 scenarios passing with detailed output.
+### Option 3: Viewing an Allure Report
 
-### Generate a Pretty Report
-
-Want to see your results in a nice HTML format?
+Generate the beautiful Allure HTML report with:
 
 ```bash
-npm run test:report
+npm run report:allure
 ```
 
-This creates an HTML report in the `reports/` directory that you can share with your team.
+This command converts the raw files in `allure-results/` into a full HTML dashboard inside `allure-report/`.  Open `allure-report/index.html` in your browser to explore results, drill into steps, and view logs or attachments.
 
-## What We're Testing
+## Automating Tests with GitHub Actions
 
-Our test suite covers everything the Agify API can do:
+This is where things get really cool. We have already set up a system that automatically runs your tests every time you make changes to your code and push them to GitHub.
 
-### Basic Functionality
+Here's what's already configured in your project:
 
-- **Valid names**: Testing with real names like "michael" to get age predictions
-- **Names with numbers**: Seeing how the API handles "john123" 
+### What Happens Automatically
 
-### Error Handling
+Every time you push code to GitHub, our system will:
 
-- **Missing parameters**: What happens when you forget the name parameter
-- **Empty values**: Testing edge cases with empty strings
+1. **Set up a clean testing environment** * Like getting a fresh computer just for testing
+2. **Install all the necessary tools** * All the helper programs we need
+3. **Run all your tests using the mock server** * Fast and reliable testing
+4. **Generate a beautiful HTML report** * Easy to read results
+5. **Save the results** * You can download the reports later if needed
 
-### Advanced Features
+### How to See the Results
 
-- **Localization**: Getting country-specific predictions (US vs UK naming patterns)
-- **Batch processing**: Testing multiple names in a single request
-- **Rate limiting**: Checking that API headers work correctly
+1. Go to your GitHub repository page
+2. Click on the "Actions" tab at the top
+3. You'll see a list of all the test runs
+4. Click on any run to see the details
+5. If tests fail, you'll see exactly what went wrong
 
-### Real Examples
+### What Gets Tested
 
-Here's what a typical test looks like in plain English:
+Our test suite covers a comprehensive range of scenarios:
 
-```gherkin
-Scenario: Valid name returns estimated age
-  Given I have the name "michael"
-  When I send a GET request to the Agify API
-  Then the response status should be 200
-  And the response should contain a name "michael"
-  And the response should contain an age
-  And the response should contain a count
-```
+**Basic Functionality:**
 
-No technical jargon. Anyone can understand what this test does.
+* Valid names return age estimates
+* Names with numbers are handled correctly
+* Names with special characters (like "José") work properly
+
+**Advanced Features:**
+
+* Country*specific results (like "Peter" in the US vs UK)
+* Batch requests (testing multiple names at once)
+* Authentication with API keys
+
+**Error Handling:**
+
+* Missing name parameters
+* Invalid API keys
+* Rate limit exceeded scenarios
+* Too many names in a batch request
+
+**Edge Cases:**
+
+* Empty requests
+* Very long names
+* Special characters and diacritics
 
 ## Project Structure
 
-We've organized everything to make sense at first glance:
+Here's how the project is organized:
 
-```
+```text
 KaluzaPOC/
 ├── tests/
-│   ├── features/                 # Your test scenarios in plain English
-│   │   └── agify.feature        # All 7 test scenarios
-│   ├── step_definitions/         # The code that runs your scenarios  
-│   │   └── agify.steps.ts       # Connects English to TypeScript
-│   └── support/                  # Behind-the-scenes helpers
+│   ├── features/
+│   │   └── agify.feature          # Test scenarios in plain English
+│   ├── step_definitions/
+│   │   └── agify.steps.ts         # Code that runs the tests
+│   └── support/
 │       ├── api/
-│       │   └── agify.ts         # Handles all API communication
-│       └── world.ts             # Shares data between test steps
-├── reports/                      # Test results and reports
-├── package.json                  # Project dependencies and scripts
-├── cucumber.js                   # Test runner configuration
-└── tsconfig.json                # TypeScript settings
+│       │   └── agify.ts           # Helper functions for API calls
+│       ├── mocks/
+│       │   └── agifyApi.mock.ts   # Fake API responses for testing
+│       ├── logger.ts              # Logging system
+│       └── world.ts               # Test environment setup
+├── reports/                       # Test results go here
+├── .github/workflows/
+│   └── ci.yml                     # GitHub Actions configuration
+├── cucumber.js                    # Test runner configuration
+├── package.json                   # Project dependencies and scripts
+└── README.md                      # This file!
 ```
 
-### Why This Structure Works
+## Understanding the Test Results
 
-**Separation of concerns**: Each file has one job. Test scenarios stay readable, API logic stays organized, and step definitions act as the bridge between them.
+When you run the tests, you'll see output that looks something like this:
 
-**Easy to extend**: Want to test a new API endpoint? Add scenarios to the feature file and extend the API client. The structure scales naturally.
-
-**Team-friendly**: Non-technical folks can read and contribute to feature files, while developers focus on the implementation details.
-
-## Architecture Highlights
-
-We've built this following industry best practices:
-
-### SOLID Principles in Action
-
-**Single Responsibility**: Each module does one thing well. The API client handles HTTP requests, step definitions handle test logic, and feature files describe behavior.
-
-**Open/Closed**: Easy to extend with new test scenarios without modifying existing code.
-
-**Interface Segregation**: Clean TypeScript interfaces that define exactly what each part needs.
-
-**Dependency Inversion**: Step definitions depend on abstractions, not concrete implementations.
-
-### TypeScript Benefits
-
-We use TypeScript throughout for:
-
-- **Type safety**: Catch errors before runtime
-- **Better IDE support**: Autocomplete and refactoring
-- **Self-documenting code**: Interfaces tell you exactly what to expect
-
-### Robust Error Handling
-
-Our API client handles everything gracefully:
-
-- Network timeouts
-- HTTP error responses  
-- Malformed responses
-- Server outages
-
-You get meaningful error messages that help debug issues quickly.
-
-## Test Scenarios Covered
-
-### Comprehensive Coverage
-
-1. **Basic functionality**: Standard API usage with valid inputs
-2. **Edge cases**: Empty parameters, special characters, unusual names
-3. **Error conditions**: Missing parameters, invalid requests
-4. **Advanced features**: Batch requests, localization, rate limiting
-5. **Performance awareness**: Response time validation through headers
-
-### Real API Integration
-
-These tests hit the actual Agify API, not mocks. This means:
-
-- You see real response times
-- You catch actual API changes
-- You validate real-world behavior
-- You test against production-like conditions
-
-## Running Different Test Scenarios
-
-### Run Everything
-
-```bash
-npm run test
+```text
+ Valid name returns estimated age
+ Name with numbers returns an error or default
+ Name with diacritics is handled correctly
+ Exceeding rate limit returns error
 ```
 
-### Generate Reports
-
-```bash
-npm run test:report
-```
-
-### Debug Mode
-
-If tests fail, check the console output. Each request and response gets logged with timing information.
-
-## Extending the Framework
-
-### Adding New Test Scenarios
-
-1. **Write the scenario** in `tests/features/agify.feature` using Gherkin syntax
-2. **Run the test** - Cucumber will suggest step definitions for any missing steps
-3. **Implement the steps** in `tests/step_definitions/agify.steps.ts`
-4. **Extend the API client** if needed in `tests/support/api/agify.ts`
-
-### Testing Other APIs
-
-This structure works for any REST API. Copy the pattern:
-
-1. Create new feature files for your API
-2. Build API clients in the support directory
-3. Write step definitions that connect scenarios to your API client
-
-## Technical Details
-
-### Dependencies
-
-**Core testing stack**:
-
-- `@cucumber/cucumber`: BDD test runner
-- `typescript`: Type safety and modern JavaScript features
-- `chai`: Assertion library with readable syntax
-- `axios`: HTTP client for API requests
-
-**Development tools**:
-
-- `ts-node`: Run TypeScript directly
-- Various TypeScript type definitions
-
-### Node.js and npm Versions
-
-Tested with:
-
-- **Node.js**: 16.x, 18.x, 20.x
-- **npm**: 7.x, 8.x, 9.x
-
-Should work with any recent Node.js version, but we recommend Node.js 18+ for the best experience.
-
-### Browser Support
-
-This is a Node.js API testing framework. No browser required.
+* **Green checkmarks** mean the test passed
+* **Red X marks** mean the test failed
+* The descriptions tell you exactly what each test was checking
 
 ## Troubleshooting
 
-### Common Issues
+**"Command not found" errors:** Make sure you have Node.js installed and you're in the right folder.
 
-**Tests fail with network errors**: Check your internet connection. These tests hit the real Agify API.
+**Tests failing unexpectedly:** Try running `npm run test:mock` first. If mock tests pass but real API tests fail, it might be because:
 
-**TypeScript compilation errors**: Run `npm install` to ensure all dependencies are installed.
+* Your internet connection is slow
+* The API is temporarily down
+* You've hit the daily rate limit
 
-**Cucumber can't find steps**: Check that your step definitions file is in the right location and properly exported.
+**No test report generated:** Make sure you have a `reports/` folder in your project. The system should create it automatically, but you can create it manually if needed.
 
-### Getting Help
+## Contributing
 
-Look at the console output first. Logging shows you exactly what requests are being made and what responses you're getting.
+Want to add more tests? Great! Here's how:
 
-## Why This Approach Works
+1. **Add a new scenario** to `tests/features/agify.feature` in plain English
+2. **Create a mock response** in `tests/support/mocks/agifyApi.mock.ts` 
+3. **Add step definitions** in `tests/step_definitions/agify.steps.ts` if needed
+4. **Run the tests** to make sure everything works
 
-**Readable by everyone**: Stakeholders can understand what you're testing without knowing code.
+The beauty of this system is that it's designed to be readable by anyone, even if you're not a programmer!
 
-**Maintainable**: Clear structure means changes don't break everything else.
+## Need Help?
 
-**Reliable**: Tests against real APIs catch real problems.
+If you get stuck, remember:
+
+* The mock tests should always pass (they're testing our fake API)
+* The real API tests might occasionally fail due to network issues
+* Check the GitHub Actions tab to see automated test results
+* The HTML reports give you detailed information about what went wrong
