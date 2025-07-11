@@ -109,9 +109,7 @@ npm run report:allure
 ```
 
 The report captures every Cucumber step, request/response payloads, and console logs—perfect for attaching to a pull-request or interview submission.
-
----
-
+ 
 ## Continuous Integration
 
 We ship a ready-to-run **GitHub Actions** workflow (`.github/workflows/ci.yml`).  It:
@@ -126,9 +124,9 @@ We ship a ready-to-run **GitHub Actions** workflow (`.github/workflows/ci.yml`).
 
 After the test job finishes, the workflow uploads the generated **Allure HTML** bundle and deploys it via **GitHub Pages**. This gives you a permanent, shareable dashboard for every main-branch run.
 
- **Live report:** https://behrangbina.github.io/KaluzaPOC/
+ **Live report:** [https://behrangbina.github.io/KaluzaPOC/](https://behrangbina.github.io/KaluzaPOC/)
 
- **Example workflow run:** https://github.com/BehrangBina/KaluzaPOC/actions/runs/16198505125
+ **Example workflow run:** [https://github.com/BehrangBina/KaluzaPOC/actions/runs/16218545738](https://github.com/BehrangBina/KaluzaPOC/actions/runs/16218545738)
 
 A minimal excerpt of the deployment logic looks like this:
 
