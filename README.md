@@ -1,188 +1,203 @@
-# Agify API Test Automation Framework
+# Agify API Test Suite
 
-Hey there! Welcome to our project. We've built a simple but powerful tool to automatically test a fun public API called [Agify.io](https://agify.io/documentation).
+This repository demonstrates **how we write production-quality API tests in JavaScript/TypeScript using Cucumber and Behavior-Driven Development (BDD)**.  It serves two purposes:
 
-## So, what's an API?
+1. **Practical value** – provides an immediately runnable, extensible test harness for the public [Agify.io](https://agify.io/) service (or any REST API you plug in).
+2. **Hiring showcase** – illustrates our engineering standards, coding style, and decision-making process for anyone reviewing this as part of a recruitment pipeline.
 
-Imagine you're at a restaurant. You don't go into the kitchen to cook your food, right? You give your order to a waiter (the API), who takes it to the kitchen, and then brings the food back to you.
+---
 
-An API (Application Programming Interface) is just like that waiter. It's a way for different software programs to talk to each other. In our case, our testing program sends a name to the Agify API, and it sends back a guess about how old someone with that name might be.
+## Table of Contents
 
-### What does this project do?
+1. [Why This Stack?](#why-this-stack)
+2. [Quick Start](#quick-start)
+3. [Project Structure](#project-structure)
+4. [Running the Tests](#running-the-tests)
+5. [Allure Reports](#allure-reports)
+6. [Continuous Integration](#continuous-integration)
+7. [Extending the Suite](#extending-the-suite)
+8. [Troubleshooting](#troubleshooting)
+9. [Contributing](#contributing)
 
-This project automatically tests the Agify API to make sure it's working correctly. Think of it like having a robot that goes to the restaurant every day and orders the same meals to make sure the kitchen is still working properly.
+---
 
-**What you'll need:**
+## Why This Stack?
 
-* A little program called Node.js. If you don't have it, you can [download it from the official website](https://nodejs.org/).
+| Concern | Our Choice | Rationale | Common Alternatives |
+|---------|------------|-----------|---------------------|
+| **Test Style** | **Cucumber (Gherkin syntax)** | Keeps business intent readable for non-dev stakeholders; great for hiring demos. | Jest / Mocha provide unit-style specs but aren’t human-readable. |
+| **Language** | **TypeScript** | Static typing eliminates whole classes of runtime errors and improves IDE hints. | JavaScript (looser type safety). |
+| **Mocking** | **Nock** | Lightweight HTTP interceptor; zero dependencies on external servers. | MSW, WireMock (heavier to configure). |
+| **Reporting** | **Allure** | Generates attractive, navigable HTML reports with step screenshots & attachments. | JUnit (XML only), Jest HTML reporters (less interactive). |
+| **Logging** | **Pino** | Fast, structured logs; pipeable to pretty printers or JSON sinks. | Winston (larger, slower). |
 
-**Installation Steps:**
+> **In short:** I picked **the simplest tools that still give us strong typing, business-friendly syntax, and solid reporting**.  Everything lives in plain Node.js. no Docker, no heavyweight frameworks, so you can clone and run in under a minute.
 
-1. First, download all the project files to your computer (this is called "cloning").
-2. Open your terminal or command prompt.
-3. Navigate to the project folder.
-4. Type `npm install` and press Enter. This downloads all the helper tools we need.
+---
+
+## Quick Start
+
+```bash
+# 1. Install dependencies
+npm ci
+
+# 2. Run fast local tests against a mocked API
+npm run test:mock
+
+# 3. (Optional) Hit the real Agify service
+npm test
+```
+
+> Requires Node.js ≥18 and npm ≥9.
+
+---
+
+## Project Structure
+
+```text
+KaluzaPOC/
+├── tests/
+│   ├── features/             # Gherkin scenarios (human-readable)
+│   ├── step_definitions/     # Glue code mapping steps → actions
+│   └── support/              # Helpers: API client, mocks, logger, world
+├── src/                      # (Optional) production code / shared libs
+├── reports/                  # Generated HTML reports live here
+├── cucumber.js               # Cucumber CLI configuration
+└── tsconfig.json             # TypeScript compiler options
+```
+
+Key concepts:
+
+* **Custom World** pattern (`tests/support/world.ts`) injects context, DI containers, and helpers into each scenario.
+* **Ports & Adapters** – the API client is abstracted behind an interface so tests can swap real vs mocked backends.
+
+---
 
 ## Running the Tests
 
-We've set up three different ways to run our tests:
+### 1. Against the Mock Server (fastest)
 
-### Option 1: Testing with a Mock Server (Recommended for Development)
-
-This is like having a pretend restaurant that always gives you the same food, no matter what you order. It's great for testing because:
-
-* It's super fast
-* It doesn't use up your daily API requests
-* It works even when you don't have internet
-
-To run the tests against the mock server:
+Sets `USE_MOCK=true`, intercepting HTTP calls with deterministic fixtures.
 
 ```bash
 npm run test:mock
 ```
 
-### Option 2: Testing the Real API
+### 2. Against the Live API (integration)
 
-This actually talks to the real Agify website. It's slower and uses up your daily free requests, but it tests the real thing.
-
-To run the tests against the live API:
+Hits `https://api.agify.io` directly; ideal for smoke checks and contract tests.
 
 ```bash
-npm run test
+npm test
 ```
 
-### Option 3: Viewing an Allure Report
+Environment variables you can tweak:
 
-Generate the beautiful Allure HTML report with:
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `USE_MOCK` | `false` | Toggle mock adapter. |
+| `BASE_URL` | `https://api.agify.io` | Target URL for live tests. |
+| `LOG_LEVEL` | `info` | Pino log level. |
+
+---
+## Allure Reports
+
+Generate and open a beautiful HTML dashboard:
 
 ```bash
+# Create fresh report under /allure-report
 npm run report:allure
+
+# Then open allure-report/index.html in your browser
 ```
 
-This command converts the raw files in `allure-results/` into a full HTML dashboard inside `allure-report/`.  Open `allure-report/index.html` in your browser to explore results, drill into steps, and view logs or attachments.
+The report captures every Cucumber step, request/response payloads, and console logs—perfect for attaching to a pull-request or interview submission.
 
-## Automating Tests with GitHub Actions
+---
 
-This is where things get really cool. We have already set up a system that automatically runs your tests every time you make changes to your code and push them to GitHub.
+## Continuous Integration
 
-Here's what's already configured in your project:
+We ship a ready-to-run **GitHub Actions** workflow (`.github/workflows/ci.yml`).  It:
 
-### What Happens Automatically
+1. Checks out code and caches `node_modules`.
+2. Runs ESLint + Prettier checks.
+3. Compiles TypeScript (`tsc --noEmit`) to enforce type safety.
+4. Executes mock tests on Node 18 & 20.
+5. Publishes an Allure report artifact for easy download.
 
-Every time you push code to GitHub, our system will:
+### Publishing Allure Report to GitHub Pages
 
-1. **Set up a clean testing environment** * Like getting a fresh computer just for testing
-2. **Install all the necessary tools** * All the helper programs we need
-3. **Run all your tests using the mock server** * Fast and reliable testing
-4. **Generate a beautiful HTML report** * Easy to read results
-5. **Save the results** * You can download the reports later if needed
+After the test job finishes, the workflow uploads the generated **Allure HTML** bundle and deploys it via **GitHub Pages**. This gives you a permanent, shareable dashboard for every main-branch run.
 
-### How to See the Results
+ **Live report:** https://behrangbina.github.io/KaluzaPOC/
 
-1. Go to your GitHub repository page
-2. Click on the "Actions" tab at the top
-3. You'll see a list of all the test runs
-4. Click on any run to see the details
-5. If tests fail, you'll see exactly what went wrong
+ **Example workflow run:** https://github.com/BehrangBina/
+ KaluzaPOC/actions/runs/16198505125
 
-### What Gets Tested
+A minimal excerpt of the deployment logic looks like this:
 
-Our test suite covers a comprehensive range of scenarios:
+```yaml
+jobs:
+  test:
+    # … linter, type-check, tests …
+    - name: Upload Allure site as Pages artifact
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: allure-report
 
-**Basic Functionality:**
-
-* Valid names return age estimates
-* Names with numbers are handled correctly
-* Names with special characters (like "José") work properly
-
-**Advanced Features:**
-
-* Country*specific results (like "Peter" in the US vs UK)
-* Batch requests (testing multiple names at once)
-* Authentication with API keys
-
-**Error Handling:**
-
-* Missing name parameters
-* Invalid API keys
-* Rate limit exceeded scenarios
-* Too many names in a batch request
-
-**Edge Cases:**
-
-* Empty requests
-* Very long names
-* Special characters and diacritics
-
-## Project Structure
-
-Here's how the project is organized:
-
-```text
-KaluzaPOC/
-├── tests/
-│   ├── features/
-│   │   └── agify.feature          # Test scenarios in plain English
-│   ├── step_definitions/
-│   │   └── agify.steps.ts         # Code that runs the tests
-│   └── support/
-│       ├── api/
-│       │   └── agify.ts           # Helper functions for API calls
-│       ├── mocks/
-│       │   └── agifyApi.mock.ts   # Fake API responses for testing
-│       ├── logger.ts              # Logging system
-│       └── world.ts               # Test environment setup
-├── reports/                       # Test results go here
-├── .github/workflows/
-│   └── ci.yml                     # GitHub Actions configuration
-├── cucumber.js                    # Test runner configuration
-├── package.json                   # Project dependencies and scripts
-└── README.md                      # This file!
+  deploy:
+    needs: test
+    permissions:
+      pages: write      # allow pushing to gh-pages
+      id-token: write   # enable OIDC authentication
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
 ```
 
-## Understanding the Test Results
+That's it each push automatically refreshes the hosted Allure report, making test results instantly accessible to reviewers, teammates, and hiring managers.
 
-When you run the tests, you'll see output that looks something like this:
+---
 
-```text
- Valid name returns estimated age
- Name with numbers returns an error or default
- Name with diacritics is handled correctly
- Exceeding rate limit returns error
-```
+## Extending the Suite
 
-* **Green checkmarks** mean the test passed
-* **Red X marks** mean the test failed
-* The descriptions tell you exactly what each test was checking
+1. **Add a Scenario**
+   * Create a new `.feature` file in `tests/features/`.
+   * Write steps in plain English—no code required.
+2. **Create/Reuse Step Definitions**
+   * If new behaviour is needed, add a matcher in `tests/step_definitions/`.
+   * Keep the glue thin; push logic into helper classes under `tests/support/`.
+3. **Mock the Response** (optional)
+   * Add a fixture in `tests/support/mocks/` and update the mock adapter.
+4. **Run `npm run test:mock`** – ensure green locally before opening a PR.
+
+---
 
 ## Troubleshooting
 
-**"Command not found" errors:** Make sure you have Node.js installed and you're in the right folder.
+| Problem | Likely Cause | Fix |
+|---------|--------------|-----|
+| `ECONNREFUSED` when hitting live API | Firewall or Agify outage | Retry later or use mock mode. |
+| Tests pass locally but fail in CI | Missing env var | Confirm secrets & env config in Actions. |
+| No report generated | `allure-results` folder empty | Ensure tests actually executed; check Cucumber output. |
 
-**Tests failing unexpectedly:** Try running `npm run test:mock` first. If mock tests pass but real API tests fail, it might be because:
+1. `npm run lint` passes with no errors.
+2. All tests (`mock` & `live`) are green.
+3. New code paths are covered, aim for ≥80 % line coverage.
 
-* Your internet connection is slow
-* The API is temporarily down
-* You've hit the daily rate limit
+---
 
-**No test report generated:** Make sure you have a `reports/` folder in your project. The system should create it automatically, but you can create it manually if needed.
+### Final Note for Reviewers
 
-## Contributing
+This repository is intentionally **lightweight**. No complicated Docker Compose files, no sprawling micro-service demos.  I believe **clarity beats cleverness** when you're assessing engineering skill:
 
-Want to add more tests? Great! Here's how:
+* **Readable Scenarios** prove empathy for non-technical stakeholders.
+* **Typed, hexagonal helpers** show design discipline without over-engineering.
+* **Fast feedback loops** (mock tests <1 s) highlight CI efficiency.
 
-1. **Add a new scenario** to `tests/features/agify.feature` in plain English
-2. **Create a mock response** in `tests/support/mocks/agifyApi.mock.ts` 
-3. **Add step definitions** in `tests/step_definitions/agify.steps.ts` if needed
-4. **Run the tests** to make sure everything works
-
-The beauty of this system is that it's designed to be readable by anyone, even if you're not a programmer!
-
-## Need Help?
-
-If you get stuck, remember:
-
-* The mock tests should always pass (they're testing our fake API)
-* The real API tests might occasionally fail due to network issues
-* Check the GitHub Actions tab to see automated test results
-* The HTML reports give you detailed information about what went wrong
+If you’d like to discuss the design trade-offs feel free to reach out 😄
