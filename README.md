@@ -2,11 +2,6 @@
 
 This repository demonstrates **how we write production-quality API tests in JavaScript/TypeScript using Cucumber and Behavior-Driven Development (BDD)**.  It serves two purposes:
 
-1. **Practical value** – provides an immediately runnable, extensible test harness for the public [Agify.io](https://agify.io/) service (or any REST API you plug in).
-2. **Hiring showcase** – illustrates our engineering standards, coding style, and decision-making process for anyone reviewing this as part of a recruitment pipeline.
-
----
-
 ## Table of Contents
 
 1. [Why This Stack?](#why-this-stack)
@@ -17,7 +12,6 @@ This repository demonstrates **how we write production-quality API tests in Java
 6. [Continuous Integration](#continuous-integration)
 7. [Extending the Suite](#extending-the-suite)
 8. [Troubleshooting](#troubleshooting)
-9. [Contributing](#contributing)
 
 ---
 
@@ -28,10 +22,10 @@ This repository demonstrates **how we write production-quality API tests in Java
 | **Test Style** | **Cucumber (Gherkin syntax)** | Keeps business intent readable for non-dev stakeholders; great for hiring demos. | Jest / Mocha provide unit-style specs but aren’t human-readable. |
 | **Language** | **TypeScript** | Static typing eliminates whole classes of runtime errors and improves IDE hints. | JavaScript (looser type safety). |
 | **Mocking** | **Nock** | Lightweight HTTP interceptor; zero dependencies on external servers. | MSW, WireMock (heavier to configure). |
-| **Reporting** | **Allure** | Generates attractive, navigable HTML reports with step screenshots & attachments. | JUnit (XML only), Jest HTML reporters (less interactive). |
+| **Reporting** | **Allure** | Generates attractive, navigable HTML reports with step screenshots & attachments. | Jest HTML reporters (less interactive). |
 | **Logging** | **Pino** | Fast, structured logs; pipeable to pretty printers or JSON sinks. | Winston (larger, slower). |
 
-> **In short:** I picked **the simplest tools that still give us strong typing, business-friendly syntax, and solid reporting**.  Everything lives in plain Node.js. no Docker, no heavyweight frameworks, so you can clone and run in under a minute.
+> **In short:** I picked **the simplest tools that still give us strong typing, business friendly syntax, and solid reporting**.  Everything lives in plain Node.js. no Docker, no heavyweight frameworks, so you can clone and run in under a minute.
 
 ---
 
@@ -57,21 +51,23 @@ npm test
 ```text
 KaluzaPOC/
 ├── tests/
-│   ├── features/             # Gherkin scenarios (human-readable)
-│   ├── step_definitions/     # Glue code mapping steps → actions
-│   └── support/              # Helpers: API client, mocks, logger, world
-├── src/                      # (Optional) production code / shared libs
-├── reports/                  # Generated HTML reports live here
-├── cucumber.js               # Cucumber CLI configuration
-└── tsconfig.json             # TypeScript compiler options
+│   ├── features/
+│   │   ├── age_estimation/         # Single-name scenarios
+│   │   ├── batch_processing/       # Batch requests (+ edge cases)
+│   │   ├── rate_limiting/          # Quota / header checks
+│   │   └── authentication/         # API-key scenarios
+│   ├── step_definitions/           # Glue code mapping steps → actions
+│   └── support/                    # Helpers: API client, mocks, logger, world
+├── src/                            # (Optional) production code / shared libs
+├── reports/                        # Generated HTML reports live here
+├── cucumber.js                     # Cucumber CLI configuration
+└── tsconfig.json                   # TypeScript compiler options
 ```
 
 Key concepts:
 
 * **Custom World** pattern (`tests/support/world.ts`) injects context, DI containers, and helpers into each scenario.
 * **Ports & Adapters** – the API client is abstracted behind an interface so tests can swap real vs mocked backends.
-
----
 
 ## Running the Tests
 
@@ -100,6 +96,7 @@ Environment variables you can tweak:
 | `LOG_LEVEL` | `info` | Pino log level. |
 
 ---
+
 ## Allure Reports
 
 Generate and open a beautiful HTML dashboard:
@@ -131,8 +128,7 @@ After the test job finishes, the workflow uploads the generated **Allure HTML** 
 
  **Live report:** https://behrangbina.github.io/KaluzaPOC/
 
- **Example workflow run:** https://github.com/BehrangBina/
- KaluzaPOC/actions/runs/16198505125
+ **Example workflow run:** https://github.com/BehrangBina/KaluzaPOC/actions/runs/16198505125
 
 A minimal excerpt of the deployment logic looks like this:
 
@@ -167,7 +163,7 @@ That's it each push automatically refreshes the hosted Allure report, making tes
 ## Extending the Suite
 
 1. **Add a Scenario**
-   * Create a new `.feature` file in `tests/features/`.
+   * Pick the right folder under `tests/features/` (e.g. `age_estimation/`).
    * Write steps in plain English—no code required.
 2. **Create/Reuse Step Definitions**
    * If new behaviour is needed, add a matcher in `tests/step_definitions/`.
@@ -196,7 +192,7 @@ That's it each push automatically refreshes the hosted Allure report, making tes
 
 This repository is intentionally **lightweight**. No complicated Docker Compose files, no sprawling micro-service demos.  I believe **clarity beats cleverness** when you're assessing engineering skill:
 
-* **Readable Scenarios** prove empathy for non-technical stakeholders.
+* **Readable Scenarios** prove details for  the non-technical stakeholders.
 * **Typed, hexagonal helpers** show design discipline without over-engineering.
 * **Fast feedback loops** (mock tests <1 s) highlight CI efficiency.
 
